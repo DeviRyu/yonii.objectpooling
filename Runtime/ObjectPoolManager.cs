@@ -1,14 +1,16 @@
 using System.Collections.Generic;
 using UnityEngine;
+// ReSharper disable InconsistentNaming
 
 namespace Yonii8.Unity.ObjectPooling
 {
     public class ObjectPoolManager : MonoBehaviour
     {
-        public static ObjectPoolManager Instance;
-
         [Header("PoolList")]
-        public List<ObjectPool> Pools;
+        [SerializeField] private List<ObjectPool> _pools;
+        
+        public static ObjectPoolManager Instance;
+        public readonly Dictionary<string, ObjectPool> PoolsDic = new();
 
         private void Awake()
         {
@@ -18,9 +20,16 @@ namespace Yonii8.Unity.ObjectPooling
 
         private void Start()
         {
-            Pools.ForEach(p =>
+            _pools.ForEach(pool =>
             {
-                p.Initialise(gameObject.transform);
+                pool.Initialise(poolManager: gameObject.transform);
+
+                if (!PoolsDic.TryAdd(pool.name, pool))
+                {
+                    Debug.LogWarning(
+                        $"Pool {pool.name} could not be added to dictionary."
+                        );
+                }
             });
         }
     }
