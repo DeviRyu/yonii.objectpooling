@@ -6,9 +6,8 @@ using Yonniie8.Unity.Utilities.Components;
 
 // ReSharper disable InconsistentNaming
 
-namespace Yonii8.Unity.ObjectPooling
+namespace Yonii8.ObjectPooling
 {
-    
     [CreateAssetMenu(fileName = nameof(ObjectPool), menuName = "Yonii/Object Pooling/Create New Pool")]
     public class ObjectPool : ScriptableObject
     {
@@ -17,6 +16,7 @@ namespace Yonii8.Unity.ObjectPooling
         private bool _initialised;
         
         [SerializeField] private int _initialCount;
+        [SerializeField] private bool _nonAsyncInstantiation; 
         
         public GameObject Prefab;
         public bool ExpandablePool;
@@ -35,21 +35,26 @@ namespace Yonii8.Unity.ObjectPooling
                     "Please check that you have properly populated the value.");
                 _initialCount = 5;
             }
-            FillPool(_initialCount);
+            
+            if(_nonAsyncInstantiation)
+                FillPool(_initialCount);
+            else
+                FillPoolAsync(_initialCount);
+            
             Prefab.SetActive(true);
         }
 
         private void OnEnable()
         {
 #if UNITY_EDITOR
-            UnityEditor.EditorApplication.playModeStateChanged += EditorApplicationOnplayModeStateChanged;
+            EditorApplication.playModeStateChanged += EditorApplicationOnplayModeStateChanged;
 #endif
         }
 
         private void OnDisable()
         {
 #if UNITY_EDITOR
-            UnityEditor.EditorApplication.playModeStateChanged -= EditorApplicationOnplayModeStateChanged;
+            EditorApplication.playModeStateChanged -= EditorApplicationOnplayModeStateChanged;
 #endif
         }
 
@@ -87,10 +92,31 @@ namespace Yonii8.Unity.ObjectPooling
             obj.SetActive(false);
         }
 
-        private void FillPool(int initialCount)
+        private void FillPoolAsync(int initialCount)
         {
             var instantiateAsync = InstantiateAsync(Prefab, initialCount, _parent.transform);
             instantiateAsync.completed += (operation) => InstantiationCompleted(operation, instantiateAsync);
+        }
+
+        private void FillPool(int initialCount)
+        {
+            for (var i = 0; i < initialCount; i++)
+            {
+                var obj = CreatePooledGameObject();
+                if (!obj.TryGetComponent<PooledMonoBehaviour>(out var pooledMonoBehaviour))
+                {
+                    Debug.LogWarning(
+                        $"Could not find PooledMonoBehaviour for pooled object {obj.name} in pool {_parent.name} " +
+                        "If that is intended please ignore. " +
+                        "Otherwise please check your object."
+                    );
+                    
+                    UpdateNameAndAddToObjects(pooledObject: obj, index: i);
+                }
+
+                SetPoolAndUpdateNameOnMono(pooledMonoBehaviour, index: i);
+                _objects.Add(obj);
+            }
         }
 
         private void UpdatePooledMonoBehaviours(GameObject[] gameObjects)
@@ -98,7 +124,7 @@ namespace Yonii8.Unity.ObjectPooling
             var index = _objects.Count;
             foreach (var pooledObject in gameObjects)
             {
-                if (!pooledObject.transform.TryGetComponentsInChildren<PooledMonoBehaviour>(out var pooledMonoBehaviours))
+                if (!pooledObject.TryGetComponentsInChildren<PooledMonoBehaviour>(out var pooledMonoBehaviours))
                 {
                     Debug.LogWarning(
                         $"Could not find PooledMonoBehaviour for pooled object {pooledObject.name} in pool {_parent.name} " +
@@ -106,22 +132,30 @@ namespace Yonii8.Unity.ObjectPooling
                         "Otherwise please check your object."
                     );
 
-                    pooledObject.name += $" - {index}";
-                    index++;
-                    _objects.Add(pooledObject);
+                    UpdateNameAndAddToObjects(pooledObject, index);
 
+                    index++;
                     continue;
                 }
                 
-                foreach (var pooledMonoBehaviour in pooledMonoBehaviours)
-                {
-                    pooledMonoBehaviour.SetPool(this);
-                    pooledMonoBehaviour.UpdateName(index.ToString());
-                }
+                foreach (var pooledMonoBehaviour in pooledMonoBehaviours) 
+                    SetPoolAndUpdateNameOnMono(pooledMonoBehaviour, index);
 
                 index++;
                 _objects.Add(pooledObject);
             }
+        }
+
+        private void SetPoolAndUpdateNameOnMono(PooledMonoBehaviour pooledMonoBehaviour, int index)
+        {
+            pooledMonoBehaviour.SetPool(this);
+            pooledMonoBehaviour.UpdateName(index.ToString());
+        }
+
+        private void UpdateNameAndAddToObjects(GameObject pooledObject, int index)
+        {
+            pooledObject.name += $" - {index}";
+            _objects.Add(pooledObject);
         }
 
         private GameObject ExpandPool()
