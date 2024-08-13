@@ -1,16 +1,16 @@
 {
-    "name": "com.yonii.unity.objectpooling",
-    "version": "1.0.0",
-    "displayName": "Yonii8.Unity.ObjectPooling",
-    "description": "Object Pooling",
-    "unity": "2022.3",
-    "unityRelease": "20f1",
-    "dependencies":{
-        "com.yonniie.unity.utilities": "0.0.2"
-    },
-    "author": {
-        "name": "yonii",
-        "email": "yonii@dragoonz.studio",
-        "url": ""
-    }
+  "name": "com.yonii.unity.objectpooling",
+  "version": "1.1.0",
+  "displayName": "Yonii8.ObjectPooling",
+  "description": "Object Pooling",
+  "unity": "2022.3",
+  "unityRelease": "20f1",
+  "dependencies": {
+    "com.yonniie.unity.utilities": "0.0.2"
+  },
+  "author": {
+    "name": "yonii",
+    "email": "yonii@dragoonz.studio",
+    "url": ""
+  }
 }

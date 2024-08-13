@@ -1,8 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
+
 // ReSharper disable InconsistentNaming
 
-namespace Yonii8.Unity.ObjectPooling
+namespace Yonii8.ObjectPooling
 {
     public class ObjectPoolManager : MonoBehaviour
     {

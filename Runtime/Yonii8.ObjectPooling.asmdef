@@ -1,0 +1,16 @@
+{
+    "name": "Yonii8.ObjectPooling",
+    "rootNamespace": "",
+    "references": [
+        "GUID:46503a97ad833044c8255fa9c55a74cf"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
