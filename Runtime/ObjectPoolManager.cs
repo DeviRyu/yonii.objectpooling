@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 // ReSharper disable InconsistentNaming
@@ -9,9 +10,9 @@ namespace Yonii8.ObjectPooling
     {
         [Header("PoolList")]
         [SerializeField] private List<ObjectPool> _pools;
+        private readonly Dictionary<string, ObjectPool> _poolsDic = new();
         
         public static ObjectPoolManager Instance;
-        public readonly Dictionary<string, ObjectPool> PoolsDic = new();
 
         private void Awake()
         {
@@ -22,13 +23,38 @@ namespace Yonii8.ObjectPooling
             {
                 pool.Initialise(poolManager: gameObject.transform);
 
-                if (!PoolsDic.TryAdd(pool.name, pool))
+                if (!_poolsDic.TryAdd(pool.name, pool))
                 {
                     Debug.LogWarning(
                         $"Pool {pool.name} could not be added to dictionary."
                     );
                 }
             });
+        }
+
+        public ObjectPool GetPool(string poolName)
+        {
+            if (!_poolsDic.TryGetValue(poolName, out var pool))
+                Debug.LogWarning(
+                    $"Could not find pool with name - {poolName}"
+                );
+
+            return pool;
+        }
+
+        public List<ObjectPool> GetPools(List<string> poolNames)
+        {
+            var poolList = new List<ObjectPool>(capacity: poolNames.Count);
+            poolNames.ForEach(poolName =>
+            {
+                var pool = GetPool(poolName);
+                if(!pool)
+                    return;
+                
+                poolList.Add(pool);
+            });
+
+            return poolList;
         }
     }
 }
