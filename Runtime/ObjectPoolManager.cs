@@ -17,10 +17,7 @@ namespace Yonii8.ObjectPooling
         {
             if(!Instance)
                 Instance = this;
-        }
-
-        private void Start()
-        {
+            
             _pools.ForEach(pool =>
             {
                 pool.Initialise(poolManager: gameObject.transform);
@@ -29,7 +26,7 @@ namespace Yonii8.ObjectPooling
                 {
                     Debug.LogWarning(
                         $"Pool {pool.name} could not be added to dictionary."
-                        );
+                    );
                 }
             });
         }
