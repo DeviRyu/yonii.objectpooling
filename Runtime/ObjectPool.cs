@@ -58,7 +58,7 @@ namespace Yonii8.ObjectPooling
 #endif
         }
 
-        private GameObject GetPooledObject()
+        public GameObject GetPooledObject()
         {
             if (!_initialised)
             {
@@ -84,6 +84,14 @@ namespace Yonii8.ObjectPooling
                 throw new ApplicationException($"Non-expandable pool is out of pooled objects. This object pool is for prefab - {Prefab.name}");
 
             return ExpandPool();
+        }
+
+        public GameObject GetPooledObject(Vector3 position, Quaternion rotation)
+        {
+            var obj = GetPooledObject();
+            obj.transform.SetPositionAndRotation(position, rotation);
+
+            return obj;
         }
 
         public void Return(GameObject obj)
