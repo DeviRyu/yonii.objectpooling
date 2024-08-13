@@ -86,13 +86,13 @@ namespace Yonii8.ObjectPooling
             return ExpandPool();
         }
 
-        public GameObject GetPooledObject(Vector3 position, Quaternion rotation, Transform parent = null)
+        public GameObject GetPooledObject(Vector3 position, Quaternion rotation, Transform parent = null, bool worldPositionStays = true)
         {
             var obj = GetPooledObject();
             obj.transform.SetPositionAndRotation(position, rotation);
 
             if(parent)
-                obj.transform.SetParent(parent);
+                obj.transform.SetParent(parent, worldPositionStays);
 
             return obj;
         }
