@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using Yonniie8.Unity.Utilities.Components;
@@ -110,10 +111,45 @@ namespace Yonii8.ObjectPooling
             return obj;
         }
 
-        public void Return(GameObject obj)
+        /// <summary>
+        /// Returning a game object to its pool.
+        /// Will set the parent of the object to the pool with a worldPositionStays with false and then will deactivate the object.
+        /// It will also reset the position and rotation to 0.
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <param name="worldPositionStays"></param>
+        /// <param name="resetPositionAndRotation"></param>
+        /// <param name="resetLocalPositionAndRotation"></param>
+        public void Return(
+            GameObject obj, 
+            bool worldPositionStays = false, 
+            bool resetPositionAndRotation = true,
+            bool resetLocalPositionAndRotation = true
+            )
         {
-            obj.transform.SetParent(_parent.transform, worldPositionStays: false);
+            var data = _objects.FirstOrDefault(d => d.GameObject == obj);
+            if (data == null)
+            {
+                Debug.LogWarning(
+                    $"Return - Could not find data for GameObject {obj.name}" +
+                    "This object doesn't exist in the pool anymore." +
+                    "Please make sure it has not been removed by mistake!"
+                    );
+                
+                return;
+            }
+
+            obj.transform.SetParent(_parent.transform, worldPositionStays: worldPositionStays);
             obj.SetActive(false);
+            data.isTakenOut = false;
+
+            if (!resetPositionAndRotation) 
+                return;
+
+            if(resetLocalPositionAndRotation)
+                obj.transform.SetLocalPositionAndRotation(localPosition: Vector3.zero, localRotation: Quaternion.identity);
+            else
+                obj.transform.SetPositionAndRotation(position: Vector3.zero, rotation: Quaternion.identity);
         }
 
         private void FillPoolAsync(int initialCount)
@@ -135,6 +171,14 @@ namespace Yonii8.ObjectPooling
 
         private void UpdatePooledMonoBehaviours(GameObject[] gameObjects)
         {
+            if (_objects == null)
+            {
+                Debug.LogError(
+                    "UpdatePooledMonoBehaviours - _objects list has been found null. This list should always be instantiated!" +
+                    "This code monkey has done something wrong!:("
+                    );
+            }
+            
             var index = _objects?.Count ?? 0;
             foreach (var pooledObject in gameObjects)
             {
