@@ -128,6 +128,8 @@ namespace Yonii8.ObjectPooling
                 SetPoolAndUpdateNameOnMono(pooledMonoBehaviour, index: i);
                 _objects.Add(obj);
             }
+
+            _initialised = true;
         }
 
         private void UpdatePooledMonoBehaviours(GameObject[] gameObjects)

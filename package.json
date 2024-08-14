@@ -1,6 +1,6 @@
 {
   "name": "com.yonii.unity.objectpooling",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "displayName": "Yonii8.ObjectPooling",
   "description": "Object Pooling",
   "unity": "2022.3",
