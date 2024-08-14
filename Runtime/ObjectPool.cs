@@ -11,7 +11,8 @@ namespace Yonii8.ObjectPooling
     [CreateAssetMenu(fileName = nameof(ObjectPool), menuName = "Yonii/Object Pooling/Create New Pool")]
     public class ObjectPool : ScriptableObject
     {
-        private List<GameObject> _objects;
+        // TODO: Investigate. On a save/reload system this might have the wrong IsTakenOut values due to being a ScriptableObject
+        private List<PooledObjectData> _objects;
         private GameObject _parent;
         private bool _initialised;
         
@@ -25,6 +26,7 @@ namespace Yonii8.ObjectPooling
         {            
             _parent = new GameObject(name: $"{Prefab.name}_Pool");
             _parent.transform.SetParent(poolManager, worldPositionStays: false);
+            _objects = new List<PooledObjectData>();
 
             Prefab.SetActive(false);
 
@@ -58,7 +60,7 @@ namespace Yonii8.ObjectPooling
 #endif
         }
 
-        public GameObject GetPooledObject()
+        public GameObject GetPooledObject(bool shouldActivateObject = true)
         {
             if (!_initialised)
             {
@@ -68,27 +70,38 @@ namespace Yonii8.ObjectPooling
                     "Pool will create a new object so that game can continue. (will ignore non-expandable condition)!"
                     );
 
-                return ExpandPool();
+                return ExpandPool(shouldActivateObject);
             }
             
-            foreach (var obj in _objects)
+            foreach (var data in _objects)
             {
-                if(obj.activeSelf || obj.activeInHierarchy)
+                if(data.isTakenOut)
+                    continue;
+                
+                if(data.GameObject.activeSelf || data.GameObject.activeInHierarchy)
                     continue;
 
-                obj.SetActive(true);
-                return obj;
+                data.GameObject.SetActive(shouldActivateObject);
+                data.isTakenOut = true;
+                
+                return data.GameObject;
             }
 
             if (!ExpandablePool)
                 throw new ApplicationException($"Non-expandable pool is out of pooled objects. This object pool is for prefab - {Prefab.name}");
 
-            return ExpandPool();
+            return ExpandPool(shouldActivateObject);
         }
 
-        public GameObject GetPooledObject(Vector3 position, Quaternion rotation, Transform parent = null, bool worldPositionStays = true)
+        public GameObject GetPooledObject(
+            Vector3 position,
+            Quaternion rotation, 
+            bool shouldActivateObject = true, 
+            Transform parent = null, 
+            bool worldPositionStays = true
+            )
         {
-            var obj = GetPooledObject();
+            var obj = GetPooledObject(shouldActivateObject);
             obj.transform.SetPositionAndRotation(position, rotation);
 
             if(parent)
@@ -114,19 +127,7 @@ namespace Yonii8.ObjectPooling
             for (var i = 0; i < initialCount; i++)
             {
                 var obj = CreatePooledGameObject();
-                if (!obj.TryGetComponent<PooledMonoBehaviour>(out var pooledMonoBehaviour))
-                {
-                    Debug.LogWarning(
-                        $"Could not find PooledMonoBehaviour for pooled object {obj.name} in pool {_parent.name} " +
-                        "If that is intended please ignore. " +
-                        "Otherwise please check your object."
-                    );
-                    
-                    UpdateNameAndAddToObjects(pooledObject: obj, index: i);
-                }
-
-                SetPoolAndUpdateNameOnMono(pooledMonoBehaviour, index: i);
-                _objects.Add(obj);
+                UpdatePooledMonoBehaviours(new []{obj});
             }
 
             _initialised = true;
@@ -134,7 +135,7 @@ namespace Yonii8.ObjectPooling
 
         private void UpdatePooledMonoBehaviours(GameObject[] gameObjects)
         {
-            var index = _objects.Count;
+            var index = _objects?.Count ?? 0;
             foreach (var pooledObject in gameObjects)
             {
                 if (!pooledObject.TryGetComponentsInChildren<PooledMonoBehaviour>(out var pooledMonoBehaviours))
@@ -155,8 +156,19 @@ namespace Yonii8.ObjectPooling
                     SetPoolAndUpdateNameOnMono(pooledMonoBehaviour, index);
 
                 index++;
-                _objects.Add(pooledObject);
+                CreateNewPooledObjectDataAndAddToObjects(pooledObject);
             }
+        }
+
+        private void CreateNewPooledObjectDataAndAddToObjects(GameObject gameObject)
+        {
+            var pooledObjectData = new PooledObjectData
+            {
+                GameObject = gameObject,
+                isTakenOut = false,
+            };
+            
+            _objects.Add(pooledObjectData);
         }
 
         private void SetPoolAndUpdateNameOnMono(PooledMonoBehaviour pooledMonoBehaviour, int index)
@@ -168,14 +180,14 @@ namespace Yonii8.ObjectPooling
         private void UpdateNameAndAddToObjects(GameObject pooledObject, int index)
         {
             pooledObject.name += $" - {index}";
-            _objects.Add(pooledObject);
+            CreateNewPooledObjectDataAndAddToObjects(pooledObject);
         }
 
-        private GameObject ExpandPool()
+        private GameObject ExpandPool(bool shouldActivateObject)
         {
             var newObject = CreatePooledGameObject();
             UpdatePooledMonoBehaviours(new []{newObject});
-            newObject.SetActive(true);
+            newObject.SetActive(shouldActivateObject);
 
             return newObject;
         }
@@ -210,5 +222,11 @@ namespace Yonii8.ObjectPooling
             Clear();
         }
 #endif
+    }
+
+    internal class PooledObjectData
+    {
+        public GameObject GameObject { get; set; }
+        public bool isTakenOut { get; set; }
     }
 }
