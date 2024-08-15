@@ -23,6 +23,8 @@ namespace Yonii8.ObjectPooling
         public GameObject Prefab;
         public bool ExpandablePool;
 
+        #region Public
+
         public void Initialise(Transform poolManager)
         {            
             _parent = new GameObject(name: $"{Prefab.name}_Pool");
@@ -46,21 +48,7 @@ namespace Yonii8.ObjectPooling
             
             Prefab.SetActive(true);
         }
-
-        private void OnEnable()
-        {
-#if UNITY_EDITOR
-            EditorApplication.playModeStateChanged += EditorApplicationOnplayModeStateChanged;
-#endif
-        }
-
-        private void OnDisable()
-        {
-#if UNITY_EDITOR
-            EditorApplication.playModeStateChanged -= EditorApplicationOnplayModeStateChanged;
-#endif
-        }
-
+        
         public GameObject GetPooledObject(bool shouldActivateObject = true)
         {
             if (!_initialised)
@@ -69,7 +57,7 @@ namespace Yonii8.ObjectPooling
                     "Pool has not initialised yet!" +
                     "Please make sure that whatever objects you are grabbing are done post initialising!" +
                     "Pool will create a new object so that game can continue. (will ignore non-expandable condition)!"
-                    );
+                );
 
                 return ExpandPool(shouldActivateObject);
             }
@@ -100,7 +88,7 @@ namespace Yonii8.ObjectPooling
             bool shouldActivateObject = true, 
             Transform parent = null, 
             bool worldPositionStays = true
-            )
+        )
         {
             var obj = GetPooledObject(shouldActivateObject);
             obj.transform.SetPositionAndRotation(position, rotation);
@@ -125,7 +113,7 @@ namespace Yonii8.ObjectPooling
             bool worldPositionStays = false, 
             bool resetPositionAndRotation = true,
             bool resetLocalPositionAndRotation = true
-            )
+        )
         {
             var data = _objects.FirstOrDefault(d => d.GameObject == obj);
             if (data == null)
@@ -134,7 +122,7 @@ namespace Yonii8.ObjectPooling
                     $"Return - Could not find data for GameObject {obj.name}" +
                     "This object doesn't exist in the pool anymore." +
                     "Please make sure it has not been removed by mistake!"
-                    );
+                );
                 
                 return;
             }
@@ -151,6 +139,37 @@ namespace Yonii8.ObjectPooling
             else
                 obj.transform.SetPositionAndRotation(position: Vector3.zero, rotation: Quaternion.identity);
         }
+
+        /// <summary>
+        /// If your pooled object(s) have pooled objects from other pools as children
+        /// this method can be used to return those objects back to their respective pools
+        /// without having to ReFill your pool by instantiating new objects.
+        /// WARNING - Child pooled object(s) need to have a PooledMonoBehaviour to be returned! 
+        /// </summary>
+        public void CleanPooledObjects()
+        {
+            _objects.ForEach(o =>
+            {
+                if(!o.GameObject.TryGetComponentsInChildren<PooledMonoBehaviour>(out var pooledMonoBehaviours))
+                {
+                    Debug.LogWarning(
+                        "Attempting to return pooled objects that do not belong to this pool failed." +
+                        $"No PooledMonoBehaviours have been found in this GameObject {o.GameObject.name}."
+                    );
+                    
+                    return;
+                }
+
+                foreach (var pooledMonoBehaviour in pooledMonoBehaviours) 
+                    pooledMonoBehaviour.ReturnToPool();
+            });
+        }
+        
+        public void Clear() => _objects.Clear();
+
+        #endregion
+
+        #region Private
 
         private void FillPoolAsync(int initialCount)
         {
@@ -176,7 +195,7 @@ namespace Yonii8.ObjectPooling
                 Debug.LogError(
                     "UpdatePooledMonoBehaviours - _objects list has been found null. This list should always be instantiated!" +
                     "This code monkey has done something wrong!:("
-                    );
+                );
             }
             
             var index = _objects?.Count ?? 0;
@@ -236,8 +255,6 @@ namespace Yonii8.ObjectPooling
             return newObject;
         }
         
-        private void Clear() => _objects.Clear();
-
         private GameObject CreatePooledGameObject()
         {
             var obj = Instantiate(Prefab, _parent.transform);
@@ -256,6 +273,24 @@ namespace Yonii8.ObjectPooling
             UpdatePooledMonoBehaviours(instantiateAsync.Result);
             _initialised = true;
         }
+
+        #endregion
+
+        #region UnityEvents
+
+        private void OnEnable()
+        {
+#if UNITY_EDITOR
+            EditorApplication.playModeStateChanged += EditorApplicationOnplayModeStateChanged;
+#endif
+        }
+
+        private void OnDisable()
+        {
+#if UNITY_EDITOR
+            EditorApplication.playModeStateChanged -= EditorApplicationOnplayModeStateChanged;
+#endif
+        }
         
 #if UNITY_EDITOR
         private void EditorApplicationOnplayModeStateChanged(PlayModeStateChange state)
@@ -266,6 +301,9 @@ namespace Yonii8.ObjectPooling
             Clear();
         }
 #endif
+
+        #endregion
+
     }
 
     internal class PooledObjectData
