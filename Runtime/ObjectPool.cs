@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Events;
 using Yonniie8.Unity.Utilities.Components;
 
 // ReSharper disable InconsistentNaming
@@ -18,10 +19,16 @@ namespace Yonii8.ObjectPooling
         private bool _initialised;
         
         [SerializeField] private int _initialCount;
-        [SerializeField] private bool _nonAsyncInstantiation; 
+        [SerializeField] private bool _nonAsyncInstantiation;
         
         public GameObject Prefab;
         public bool ExpandablePool;
+
+        #region Events
+
+        public UnityEvent<bool> HasFilledChanged;
+
+        #endregion
 
         #region Public
 
@@ -186,6 +193,7 @@ namespace Yonii8.ObjectPooling
             }
 
             _initialised = true;
+            HasFilledChanged.Invoke(true);
         }
 
         private void UpdatePooledMonoBehaviours(GameObject[] gameObjects)
@@ -272,6 +280,7 @@ namespace Yonii8.ObjectPooling
 
             UpdatePooledMonoBehaviours(instantiateAsync.Result);
             _initialised = true;
+            HasFilledChanged.Invoke(true);
         }
 
         #endregion
@@ -280,6 +289,8 @@ namespace Yonii8.ObjectPooling
 
         private void OnEnable()
         {
+            HasFilledChanged ??= new UnityEvent<bool>();
+
 #if UNITY_EDITOR
             EditorApplication.playModeStateChanged += EditorApplicationOnplayModeStateChanged;
 #endif
