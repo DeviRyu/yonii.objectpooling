@@ -56,7 +56,7 @@ namespace Yonii8.ObjectPooling
             Prefab.SetActive(true);
         }
         
-        public GameObject GetPooledObject(bool shouldActivateObject = true)
+        public GameObject GetPooledObject(bool shouldActivateObject = true, bool shouldDeactivatePrefabIfExpanding = false)
         {
             if (!_initialised)
             {
@@ -66,7 +66,7 @@ namespace Yonii8.ObjectPooling
                     "Pool will create a new object so that game can continue. (will ignore non-expandable condition)!"
                 );
 
-                return ExpandPool(shouldActivateObject);
+                return ExpandPool(shouldActivateObject, shouldDeactivatePrefabIfExpanding);
             }
             
             foreach (var data in _objects)
@@ -86,18 +86,19 @@ namespace Yonii8.ObjectPooling
             if (!ExpandablePool)
                 throw new ApplicationException($"Non-expandable pool is out of pooled objects. This object pool is for prefab - {Prefab.name}");
 
-            return ExpandPool(shouldActivateObject);
+            return ExpandPool(shouldActivateObject, shouldDeactivatePrefabIfExpanding);
         }
 
         public GameObject GetPooledObject(
             Vector3 position,
             Quaternion rotation, 
             bool shouldActivateObject = true, 
+            bool shouldDeactivatePrefabIfExpanding = false,
             Transform parent = null, 
             bool worldPositionStays = true
         )
         {
-            var obj = GetPooledObject(shouldActivateObject);
+            var obj = GetPooledObject(shouldActivateObject, shouldDeactivatePrefabIfExpanding);
             obj.transform.SetPositionAndRotation(position, rotation);
 
             if(parent)
@@ -254,11 +255,17 @@ namespace Yonii8.ObjectPooling
             CreateNewPooledObjectDataAndAddToObjects(pooledObject);
         }
 
-        private GameObject ExpandPool(bool shouldActivateObject)
+        private GameObject ExpandPool(bool shouldActivateObject, bool shouldDeactivatePrefabIfExpanding)
         {
+            if (shouldDeactivatePrefabIfExpanding) 
+                Prefab.SetActive(false);
+            
             var newObject = CreatePooledGameObject();
             UpdatePooledMonoBehaviours(new []{newObject});
             newObject.SetActive(shouldActivateObject);
+            
+            if(shouldDeactivatePrefabIfExpanding)
+                Prefab.SetActive(true);
 
             return newObject;
         }
