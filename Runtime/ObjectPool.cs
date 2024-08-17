@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 using Yonniie8.Unity.Utilities.Components;
 
 // ReSharper disable InconsistentNaming
@@ -147,6 +148,21 @@ namespace Yonii8.ObjectPooling
             else
                 obj.transform.SetPositionAndRotation(position: Vector3.zero, rotation: Quaternion.identity);
         }
+
+        /// <summary>
+        /// Return all objects from a specific scene
+        /// </summary>
+        /// <param name="scene"></param>
+        public void ReturnAllObjects(Scene scene)
+        {
+            _objects.ForEach(data =>
+            {
+                if(data.Scene == scene)
+                    Return(data.GameObject);
+            });
+        }
+
+        public void ReturnAllObjects() => _objects.ForEach(data => Return(data.GameObject));
 
         /// <summary>
         /// If your pooled object(s) have pooled objects from other pools as children
@@ -328,5 +344,6 @@ namespace Yonii8.ObjectPooling
     {
         public GameObject GameObject { get; set; }
         public bool isTakenOut { get; set; }
+        public Scene Scene => GameObject.scene;
     }
 }

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 // ReSharper disable InconsistentNaming
 
@@ -56,5 +56,8 @@ namespace Yonii8.ObjectPooling
 
             return poolList;
         }
+
+        public void ReturnAllObjects(Scene scene) => _pools.ForEach(p => p.ReturnAllObjects(scene));
+        public void ReturnAllObjects() => _pools.ForEach(p => p.ReturnAllObjects());
     }
 }
