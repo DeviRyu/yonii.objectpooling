@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Yonii8.ObjectPooling
+namespace Yonii.ObjectPooling
 {
     public class PooledMonoBehaviour : MonoBehaviour
     {

@@ -5,11 +5,11 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
-using Yonniie8.Unity.Utilities.Components;
+using Yonii.Unity.Utilities.Components;
 
 // ReSharper disable InconsistentNaming
 
-namespace Yonii8.ObjectPooling
+namespace Yonii.ObjectPooling
 {
     [CreateAssetMenu(fileName = nameof(ObjectPool), menuName = "Yonii/Object Pooling/Create New Pool")]
     public class ObjectPool : ScriptableObject

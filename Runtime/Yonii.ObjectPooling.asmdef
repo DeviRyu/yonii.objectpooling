@@ -1,5 +1,5 @@
 {
-    "name": "Yonii8.ObjectPooling",
+    "name": "Yonii.ObjectPooling",
     "rootNamespace": "",
     "references": [
         "GUID:46503a97ad833044c8255fa9c55a74cf"

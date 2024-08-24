@@ -4,7 +4,7 @@ using UnityEngine.SceneManagement;
 
 // ReSharper disable InconsistentNaming
 
-namespace Yonii8.ObjectPooling
+namespace Yonii.ObjectPooling
 {
     public class ObjectPoolManager : MonoBehaviour
     {
