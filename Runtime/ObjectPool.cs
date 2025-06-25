@@ -189,7 +189,7 @@ namespace Yonii.ObjectPooling
             });
         }
         
-        public void Clear() => _objects.Clear();
+        public void Clear() => _objects?.Clear();
 
         #endregion
 
