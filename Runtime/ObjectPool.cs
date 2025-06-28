@@ -90,17 +90,30 @@ namespace Yonii.ObjectPooling
             return ExpandPool(shouldActivateObject, shouldDeactivatePrefabIfExpanding);
         }
 
-        public GameObject GetPooledObject(
-            Vector3 position,
-            Quaternion rotation, 
-            bool shouldActivateObject = true, 
-            bool shouldDeactivatePrefabIfExpanding = false,
-            Transform parent = null, 
-            bool worldPositionStays = true
+        /// <summary>
+        /// Retrieves a pooled <see cref="GameObject"/>, sets its position and rotation, and optionally activates it and assigns it a parent.
+        /// </summary>
+        /// <param name="position">The position to place the object at.</param>
+        /// <param name="rotation">The rotation to set for the object. If <paramref name="usePooledObjectRotation"/> is true, uses the object's current rotation instead.</param>
+        /// <param name="shouldActivateObject">If true, activates the object upon retrieval. Default is true.</param>
+        /// <param name="shouldDeactivatePrefabIfExpanding">If true, deactivates the prefab when expanding the pool. Default is false.</param>
+        /// <param name="usePooledObjectRotation">If true, retains the pooled object's existing rotation instead of using the specified <paramref name="rotation"/>. Default is false.</param>
+        /// <param name="parent">Optional parent transform to assign the object to.</param>
+        /// <param name="worldPositionStays">Whether to maintain the object's world position when assigning a parent. Default is true.</param>
+        /// <returns>The <see cref="GameObject"/> retrieved from the pool with the applied transform and parent.</returns>
+        public GameObject GetPooledObject(Vector3 position,
+                                          Quaternion rotation, 
+                                          bool shouldActivateObject = true, 
+                                          bool shouldDeactivatePrefabIfExpanding = false,
+                                          bool usePooledObjectRotation = false,
+                                          Transform parent = null, 
+                                          bool worldPositionStays = true
         )
         {
             var obj = GetPooledObject(shouldActivateObject, shouldDeactivatePrefabIfExpanding);
-            obj.transform.SetPositionAndRotation(position, rotation);
+            obj.transform.SetPositionAndRotation(position, usePooledObjectRotation ? obj.transform.rotation 
+                                                                                   : rotation
+                );
 
             if(parent)
                 obj.transform.SetParent(parent, worldPositionStays);
