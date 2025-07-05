@@ -170,12 +170,36 @@ namespace Yonii.ObjectPooling
         {
             _objects.ForEach(data =>
             {
+                if (!data.GameObject)
+                {
+                    Debug.LogError("[ReturnAllObjects] - You have tried to return a GameObject to the pool " +
+                                   "But the GameObject itself as been destroyed! " +
+                                   "Investigate what happened as we should never destroy objects " +
+                                   "That are meant to return to the Pool!"
+                    );
+                    
+                    return;
+                }
+                
                 if(data.Scene == scene)
                     Return(data.GameObject);
             });
         }
 
-        public void ReturnAllObjects() => _objects.ForEach(data => Return(data.GameObject));
+        public void ReturnAllObjects() => _objects.ForEach(data =>
+        {
+            if (!data.GameObject)
+            {
+                Debug.LogError("[ReturnAllObjects] - You have tried to return a GameObject to the pool " +
+                               "But the GameObject itself as been destroyed! " +
+                               "Investigate what happened as we should never destroy objects " +
+                               "That are meant to return to the Pool!"
+                               );
+                return;
+            }
+
+            Return(data.GameObject);
+        });
 
         /// <summary>
         /// If your pooled object(s) have pooled objects from other pools as children
